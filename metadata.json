@@ -1,0 +1,10 @@
+{
+  "name": "ChicVerdict",
+  "description": "Your brutally honest personal stylist that analyzes your wardrobe and picks the perfect outfit for any occasion.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
