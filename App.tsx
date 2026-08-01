@@ -412,9 +412,12 @@ const App: React.FC = () => {
     });
   };
 
-  const deleteSavedOutfit = (id: string, e: React.MouseEvent) => {
+  const deleteSavedOutfit = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setSavedOutfits(prev => prev.filter(o => o.id !== id));
+
+    const { error } = await supabase.from('saved_outfits').delete().eq('id', id);
+    if (error) console.error('Failed to delete outfit:', error);
   };
 
   const openArchiveItem = (item: SavedOutfit) => {
