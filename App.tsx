@@ -54,6 +54,7 @@ const App: React.FC = () => {
   const [analyzedItems, setAnalyzedItems] = useState<WardrobeItem[]>([]);
   const [upscalingIds, setUpscalingIds] = useState<Set<string>>(new Set());
   const [occasion, setOccasion] = useState('');
+  const [age, setAge] = useState<string>('');
   const [status, setStatus] = useState<AppState>(AppState.IDLE);
   const [result, setResult] = useState<StylistRecommendation | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -350,8 +351,12 @@ const App: React.FC = () => {
       setError("Please select/add at least one item for your verdict.");
       return;
     }
-    if (!occasion.trim()) {
+     if (!occasion.trim()) {
       setError("Tell me where you're going!");
+      return;
+    }
+    if (!age || Number(age) <= 0) {
+      setError("Please enter your age!");
       return;
     }
 
@@ -360,7 +365,7 @@ const App: React.FC = () => {
     setIsSaved(false);
 
     try {
-      const recommendation = await analyzeOutfits(itemsToAnalyze, occasion);
+      const recommendation = await analyzeOutfits(itemsToAnalyze, occasion, age);
       setAnalyzedItems(itemsToAnalyze);
       setResult(recommendation);
       setStatus(AppState.RESULT);
@@ -598,6 +603,18 @@ const App: React.FC = () => {
                   <Wand2 className="text-gray-300 w-5 h-5" />
                 </div>
               </div>
+
+              {/* Age Input */}
+              <div className="relative">
+                <input
+                  type="number"
+                  placeholder="Your age"
+                  className="w-full bg-white border border-gray-200 rounded-2xl px-6 py-4 text-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all shadow-sm"
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                />
+              </div>
+             
 
               {/* Wardrobe Grid */}
               <div className="space-y-4">
@@ -1071,6 +1088,16 @@ const App: React.FC = () => {
                         <Wand2 className="text-gray-300 w-5 h-5" />
                       </div>
                     </div>
+                  </div>
+                  <div className="space-y-4">
+                    <label className="block text-xs font-bold uppercase tracking-widest text-gray-400">Age</label>
+                    <input
+                      type="number"
+                      placeholder="Your age"
+                      className="w-full bg-white border border-gray-200 rounded-2xl px-6 py-4 text-base focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all shadow-sm"
+                      value={age}
+                      onChange={(e) => setAge(e.target.value)}
+                    />
                   </div>
 
                   {error && (

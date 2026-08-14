@@ -8,7 +8,8 @@ const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
 export const analyzeOutfits = async (
   items: WardrobeItem[],
-  occasion: string
+  occasion: string,
+  age: string
 ): Promise<StylistRecommendation> => {
   // Use gemini-3.5-flash for complex styling and multi-modal reasoning tasks.
   const model = 'gemini-3.5-flash';
@@ -36,7 +37,7 @@ export const analyzeOutfits = async (
      For example, if you pick the shirt (index 0), pants (index 2), shoes (index 3), and vanity bag (index 5), return [0, 2, 3, 5] so they can all be saved and archived together.
   6. Return the response in JSON format.`;
 
-  const prompt = `Occasion: ${occasion}. 
+  const prompt = `Occasion: ${occasion}. User age: ${age}. 
   I have uploaded ${items.length} wardrobe items, which may include pants, shirts, dresses, footwear/shoes, vanity bags, or other accessories. 
   Please examine all these items and suggest a full, complete outfit ensemble (including shoes, bags, and accessories where available) that works best for this occasion. 
   Be brutally honest about how they look together, explain the coordination, and make sure to include the indices of ALL the selected items in the 'selectedIndices' array.`;
