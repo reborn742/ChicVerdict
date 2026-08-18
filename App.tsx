@@ -198,14 +198,22 @@ const App: React.FC = () => {
 
   // Save to localStorage whenever savedOutfits changes
   useEffect(() => {
+  try {
     localStorage.setItem('chic_verdict_archive', JSON.stringify(savedOutfits));
-  }, [savedOutfits]);
+  } catch (e) {
+    console.warn('localStorage quota hit, skipping archive cache', e);
+  }
+}, [savedOutfits]);
 
-  // Save to localStorage whenever wardrobe changes
-  useEffect(() => {
-    const toStore = wardrobe.map(({ id, base64, mimeType, category }) => ({ id, base64, mimeType, category }));
+// Save to localStorage whenever wardrobe changes (metadata only — Supabase holds the images)
+useEffect(() => {
+  try {
+    const toStore = wardrobe.map(({ id, category }) => ({ id, category }));
     localStorage.setItem('chic_verdict_wardrobe', JSON.stringify(toStore));
-  }, [wardrobe]);
+  } catch (e) {
+    console.warn('localStorage quota hit, skipping wardrobe cache', e);
+  }
+}, [wardrobe]);
 
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -1186,6 +1194,14 @@ const App: React.FC = () => {
                     }`}>
                       {result.verdict}
                     </h2>
+                    {result.ageAppropriateness && (
+                      <span className={`inline-flex items-center px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full ${
+                        result.ageAppropriateness === 'Reads Too Young/Old' ? 'bg-red-50 text-red-600' :
+                        result.ageAppropriateness === 'Borderline' ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'
+                      }`}>
+                        Age fit: {result.ageAppropriateness}
+                      </span>
+                    )}
                     <p className="text-xl text-gray-600 italic leading-relaxed">"{result.stylistNote}"</p>
                   </div>
 

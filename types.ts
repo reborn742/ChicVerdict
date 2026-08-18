@@ -13,6 +13,7 @@ export interface StylistRecommendation {
   selectedItems: string[]; // descriptions
   selectedIndices: number[]; // 0-based indices of the items in the input array
   verdict: 'Perfect Match' | 'Safe Choice' | 'Better Options Needed' | 'Fashion Faux Pas';
+  ageAppropriateness: 'Age-Appropriate' | 'Borderline' | 'Reads Too Young/Old';
   stylistNote: string;
   reasoning: string;
   honestyScore: number; // 1-100

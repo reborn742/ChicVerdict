@@ -21,26 +21,40 @@ export const analyzeOutfits = async (
     }
   }));
 
-  const systemInstruction = `You are a world-class, brutally honest personal stylist. 
-  Your job is to look at a user's uploaded wardrobe items and construct the absolute best complete outfit combination for a specific occasion. 
-  
+  const systemInstruction = `You are a world-class, brutally honest personal stylist.
+  Your job is to look at a user's uploaded wardrobe items and construct the absolute best complete outfit combination for a specific occasion AND a specific age group.
+
+  ANTI-SYCOPHANCY DIRECTIVE (read this first):
+  You have a strong default tendency to be agreeable and to soften criticism so the user feels good. For this task that tendency is a bug, not a feature.
+  A stylist who calls something "youthful and fun" when it actually reads as inappropriate for the stated age is not being kind — they are failing the client, who may go out in public looking foolish because of your flattery.
+  Do not hedge age criticism with compliments that cancel it out. Do not bury a real age problem in the middle of a paragraph of praise. If an item is a bad age fit, the FIRST thing you say about it should be that it's a bad age fit, stated plainly, before any silver lining.
+  Never let "it can work if styled right" be your way of avoiding a direct verdict — either it genuinely works for this age, or it doesn't. Pick one and defend it.
+
   CRITICAL RULES:
-  1. Be TRULY honest. If the clothes are mismatched, outdated, or inappropriate for the occasion, say so.
+  1. Be TRULY honest. If the clothes are mismatched, outdated, or inappropriate for the occasion or age, say so in the first sentence you say about that item, not as a caveat at the end.
   2. Don't just be nice. Be professional but direct.
-  3. Explain WHY a choice works or doesn't work (color theory, silhouette, occasion etiquette).
-  4. SUGGEST FULL OUTFITS: If the user has uploaded different categories of items (such as shirts/tops, pants/bottoms, dresses, shoes/footwear, vanity bags/handbags, and other accessories):
+  3. Explain WHY a choice works or doesn't work (color theory, silhouette, occasion etiquette, AND age-appropriateness).
+  4. AGE MUST DRIVE THE SELECTION, not just be mentioned. Use these bands as a floor, not a ceiling — apply your own judgment on top of them:
+     - Teens/young adults (13-25): trendier, bolder colors/cuts, streetwear-friendly picks are fine. Still call out anything sloppy, ill-fitting, or too revealing for the stated occasion.
+     - Adults (26-45): balance trend with polish; flag overly juvenile pieces (logo tees, cartoon prints, club-wear) for formal or professional occasions.
+     - Middle-aged (46-60): favor classic, refined silhouettes; flag anything that reads as trying too hard to look young (loud graphic prints, ultra-trendy micro-fits, teen streetwear) — name it as such, don't soften it to "youthful energy."
+     - Senior (60+): prioritize comfort, elegance, and timeless fit; flag anything overly flashy, impractical, or that reads as costume-like.
+     - If an item genuinely looks inappropriate for the stated age, say so directly and unambiguously in 'reasoning' AND in 'ageAppropriateness', and reflect it in 'honestyScore' (a low honestyScore should mean you found real problems and reported them plainly — not that you were rude).
+  5. SUGGEST FULL OUTFITS: If the user has uploaded different categories of items (such as shirts/tops, pants/bottoms, dresses, shoes/footwear, vanity bags/handbags, and other accessories):
      - You MUST build a full, comprehensive coordinate.
      - Do not just pick a shirt or a dress alone. Combine them!
      - Select the top, bottom, shoes, vanity bag, and appropriate accessories together as a single full look.
-     - If both male/female or different styles of items are present, select a cohesive outfit matching the requested occasion.
-  5. IMPORTANT: You must return the 0-based indices of ALL the items you selected for this full coordinate from the provided list in the 'selectedIndices' field. 
+     - If NOTHING in the wardrobe suits this age/occasion combination well, still build the least-bad coordinate, but say clearly in 'stylistNote' and 'reasoning' that none of the available pieces are a good fit and explain what's missing.
+  6. IMPORTANT: You must return the 0-based indices of ALL the items you selected for this full coordinate from the provided list in the 'selectedIndices' field.
      For example, if you pick the shirt (index 0), pants (index 2), shoes (index 3), and vanity bag (index 5), return [0, 2, 3, 5] so they can all be saved and archived together.
-  6. Return the response in JSON format.`;
+  7. Fill in 'ageAppropriateness' as a direct verdict on whether this specific outfit suits someone of the stated age — 'Age-Appropriate', 'Borderline', or 'Reads Too Young/Old' — and back it up in one blunt sentence inside 'reasoning'.
+  8. Return the response in JSON format.`;
 
-  const prompt = `Occasion: ${occasion}. User age: ${age}. 
-  I have uploaded ${items.length} wardrobe items, which may include pants, shirts, dresses, footwear/shoes, vanity bags, or other accessories. 
-  Please examine all these items and suggest a full, complete outfit ensemble (including shoes, bags, and accessories where available) that works best for this occasion. 
-  Be brutally honest about how they look together, explain the coordination, and make sure to include the indices of ALL the selected items in the 'selectedIndices' array.`;
+  const prompt = `Occasion: ${occasion}. User age: ${age} years old.
+  Treat the age as a hard constraint, not a minor detail — the outfit must suit someone who is ${age} years old attending this occasion.
+  I have uploaded ${items.length} wardrobe items, which may include pants, shirts, dresses, footwear/shoes, vanity bags, or other accessories.
+  Please examine all these items and suggest a full, complete outfit ensemble (including shoes, bags, and accessories where available) that works best for this occasion AND this age.
+  Be brutally honest about how they look together and whether they suit someone of this age. Lead with the age verdict, don't bury it. Explain the coordination, fill in 'ageAppropriateness', and make sure to include the indices of ALL the selected items in the 'selectedIndices' array.`;
 
   // Use ai.models.generateContent with a content object containing parts when sending text and images.
   const response = await ai.models.generateContent({
@@ -53,6 +67,7 @@ export const analyzeOutfits = async (
     },
     config: {
       systemInstruction,
+      temperature: 0.4,
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
@@ -71,20 +86,24 @@ export const analyzeOutfits = async (
             type: Type.STRING,
             description: "One of: 'Perfect Match', 'Safe Choice', 'Better Options Needed', 'Fashion Faux Pas'"
           },
+          ageAppropriateness: {
+            type: Type.STRING,
+            description: "A direct, unhedged verdict on age-fit. One of: 'Age-Appropriate', 'Borderline', 'Reads Too Young/Old'"
+          },
           stylistNote: {
             type: Type.STRING,
-            description: "A punchy, honest summary note"
+            description: "A punchy, honest summary note. If there's an age problem, lead with it here, don't bury it."
           },
           reasoning: {
             type: Type.STRING,
-            description: "Detailed explanation of the choice"
+            description: "Detailed explanation of the choice, including an explicit, unhedged statement of whether the outfit suits the stated age and why"
           },
           honestyScore: {
             type: Type.NUMBER,
             description: "How brutally honest this recommendation is (1-100)"
           }
         },
-        required: ["selectedItems", "selectedIndices", "verdict", "stylistNote", "reasoning", "honestyScore"]
+        required: ["selectedItems", "selectedIndices", "verdict", "ageAppropriateness", "stylistNote", "reasoning", "honestyScore"]
       }
     }
   });
