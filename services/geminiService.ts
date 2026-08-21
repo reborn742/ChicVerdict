@@ -67,7 +67,7 @@ export const analyzeOutfits = async (
     },
     config: {
       systemInstruction,
-      temperature: 0.4,
+      
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
